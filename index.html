@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mouth Runner · 입모양으로 달리는 작은 모험</title>
+<style>
+:root{color-scheme:dark;--ink:#eaf4f5;--muted:#9eafb8;--mint:#acffd4}*{box-sizing:border-box}body{margin:0;background:#101a22;color:var(--ink);font-family:system-ui,-apple-system,sans-serif}main{max-width:1100px;margin:auto;padding:36px 24px}header{display:flex;justify-content:space-between;align-items:center;gap:20px}.brand{letter-spacing:3px;font-size:12px;color:var(--mint)}h1{font-size:clamp(30px,5vw,52px);letter-spacing:-2px;margin:12px 0}p{color:var(--muted);line-height:1.7}.tag{border:1px solid #40515d;border-radius:30px;padding:10px 16px;white-space:nowrap;font-size:12px}.hud{display:flex;gap:26px;padding:20px 4px;align-items:center}.hud span{color:var(--muted);font-size:11px;letter-spacing:1px}.hud strong{display:block;font-size:24px;font-variant-numeric:tabular-nums}.hud .right{margin-left:auto}button,select{font:inherit;color:inherit;background:#23333d;border:1px solid #455661;border-radius:12px;padding:13px 18px;cursor:pointer}button:hover{background:#354a55}button:focus-visible,select:focus-visible{outline:3px solid var(--mint);outline-offset:3px}button:disabled{opacity:.4;cursor:default}.stage{position:relative;border:1px solid #42505a;border-radius:20px;overflow:hidden;background:#1b2c38}canvas{display:block;width:100%;aspect-ratio:1000/420}.overlay{position:absolute;inset:0;display:grid;place-content:center;text-align:center;padding:20px;background:#101a2299;backdrop-filter:blur(3px)}.overlay[hidden]{display:none}.overlay h2{font-size:clamp(22px,4vw,38px);margin:0 0 12px}.overlay p{color:#d0dce0;margin:0 0 20px}.primary{background:var(--mint);color:#13291e;border:0;font-weight:750}.primary:hover{background:#d2ffe7}.controls{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}.controls button{text-align:left;touch-action:none;user-select:none;min-height:86px}.controls b{display:block;margin-bottom:7px}.controls small{color:var(--muted)}.controls button.active{border-color:var(--mint);background:#294b40}.foot{display:flex;justify-content:space-between;gap:14px;align-items:center;font-size:13px}.status{color:var(--mint)}details{margin-top:28px;border-top:1px solid #34434d;padding-top:20px;color:var(--muted);font-size:14px}summary{cursor:pointer;color:var(--ink)}details p{max-width:850px}kbd{background:#34454f;border-radius:4px;padding:2px 5px}footer{margin-top:24px;color:#81939f;font-size:12px} @media(max-width:600px){main{padding:22px 14px}header{align-items:flex-start}.tag{display:none}.hud{gap:15px}.hud strong{font-size:20px}.hud button{padding:10px}.controls{gap:6px}.controls button{padding:12px 8px;font-size:13px}.controls small{font-size:11px}.foot{align-items:flex-start;flex-direction:column}.overlay p{font-size:12px;margin-bottom:12px}.overlay h2{margin-bottom:6px}.overlay button{padding:10px}}
+</style>
+<main>
+<header><div><div class="brand">MOUTH RUNNER / 01</div><h1>작은 표정, 큰 모험.</h1><p>달리기는 자동으로. 장애물을 넘고, 드론 아래를 지나가세요.</p></div><span class="tag">게임 프로토타입 · AI 연결 전</span></header>
+<div class="hud"><div><span>SCORE</span><strong id="score">00000</strong></div><div><span>BEST</span><strong id="best">00000</strong></div><div><span>SPEED</span><strong id="speed">1.0×</strong></div><button class="right" id="pause" disabled>일시정지</button></div>
+<div class="stage"><canvas id="game" width="1000" height="420" aria-label="자동 달리기 게임. 지상 장애물은 점프로, 공중 드론은 수그리기로 피하세요."></canvas><div class="overlay" id="overlay"><h2 id="title">준비됐나요?</h2><p id="message">입 닫기 입력으로 시작하세요.<br>지금은 키보드·화면 버튼으로 입모양을 대신합니다.</p><button class="primary" id="start">입 닫기 · 시작</button></div></div>
+<div class="controls"><button id="closed"><b>― 입 닫기</b><small>시작 / 기본 자세 · Enter</small></button><button id="open"><b>○ 크게 열기</b><small>점프 · Space / ↑</small></button><button id="smile"><b>▱ 이빨 보이게 웃기</b><small>누르는 동안 수그리기 · ↓</small></button></div>
+<div class="foot"><span class="status" id="status" role="status">입 닫기 입력 대기 중</span><label>속도 <select id="difficulty"><option value="240">천천히</option><option value="300" selected>보통</option></select></label></div>
+<details><summary>조작 방법과 AI 연결 안내</summary><p>지상 상자는 <b>점프</b>, 공중 드론은 <b>수그리기</b>로 피합니다. 점프 버튼은 한 번 누르면 한 번만 점프하고, 수그리기는 누르는 동안 유지됩니다. 충돌하면 게임이 끝나며 입 닫기 입력으로 다시 시작합니다. <kbd>P</kbd>로 일시정지할 수 있습니다.</p><p>입모양 매핑은 ‘입 닫기 → 기본 자세·시작’, ‘입 크게 열기 → 점프’, ‘이빨이 보이도록 입꼬리 올리기 → 수그리기’입니다. 현재는 CNN과 웹캠이 연결되지 않았습니다. 학습한 모델을 연결할 때 사용할 입력 인터페이스는 동봉된 README에 정리했습니다.</p></details>
+<footer>설치 없이 실행되는 HTML 게임 · 최고 점수는 이 브라우저에 저장됩니다.</footer>
+</main>
+<script>
+'use strict';
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const $=id=>document.getElementById(id);
+const ground=338, player={x:150,y:ground,v:0,w:42,h:60};
+let state='ready',elapsed=0,distance=0,obstacles=[],spawnIn=2.5,pose='closed',last=0,best=0,base=300,kind=0;
+let aiCandidate='',aiSince=0,aiLast=0,aiActive=false;
+try{best=Number(localStorage.getItem('mouth-runner-best'))||0}catch{}
+$('best').textContent=String(best).padStart(5,'0');
+function display(title,message,button){$('overlay').hidden=false;$('title').textContent=title;$('message').textContent=message;$('start').textContent=button;}
+function updateHUD(){ $('score').textContent=String(Math.floor(distance/10)).padStart(5,'0');$('speed').textContent=(velocity()/base).toFixed(1)+'×'; }
+function velocity(){return Math.min(base+elapsed*2,base+140)}
+function reset(){elapsed=distance=0;obstacles=[];spawnIn=2.5;kind=0;player.y=ground;player.v=0;pose='closed';state='running';$('overlay').hidden=true;$('pause').disabled=false;$('pause').textContent='일시정지';$('difficulty').disabled=true;updateHUD();}
+function input(value){if(!['closed','open','smile'].includes(value))return;const prev=pose;pose=value;document.querySelectorAll('.controls button').forEach(b=>b.classList.toggle('active',b.id===value));
+ if(state==='ready'||state==='over'){if(value==='closed')reset();else return;}
+ if(state!=='running')return;
+ if(value==='open'&&prev!=='open'&&player.y>=ground-.01){player.v=-640;}
+ $('status').textContent=value==='open'?'크게 열기 → 점프':value==='smile'?'이빨 보이게 웃기 → 수그리기':'입 닫기 → 자동 달리기';
+}
+function pause(){if(state==='running'){state='paused';pose='closed';display('잠깐 쉬어가기','준비되면 이어서 달려보세요.','계속 달리기');$('pause').textContent='계속';}else if(state==='paused'){state='running';$('overlay').hidden=true;$('pause').textContent='일시정지';}}
+function finish(){state='over';best=Math.max(best,Math.floor(distance/10));try{localStorage.setItem('mouth-runner-best',best)}catch{}$('best').textContent=String(best).padStart(5,'0');$('pause').disabled=true;$('difficulty').disabled=false;$('status').textContent='충돌! 입 닫기로 다시 시작';display('다시 달려볼까요?',Math.floor(distance/10)+'점 · 지상은 점프, 공중은 수그리기!','입 닫기 · 다시 시작');}
+function rect(){const h=pose==='smile'?28:60;return{x:player.x+4,y:player.y-h+3,w:player.w-8,h:h-6};}
+function overlaps(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;}
+function step(dt){if(state!=='running')return;elapsed+=dt;const speed=velocity();distance+=speed*dt;
+ player.v+=1650*dt;player.y+=player.v*dt;if(player.y>ground){player.y=ground;player.v=0;}
+ spawnIn-=dt;if(spawnIn<=0){const drone=kind++%2===1;obstacles.push({x:1040,y:drone?ground-76:ground-46,w:drone?66:36,h:drone?38:46,drone});spawnIn=2.1+Math.random()*.55;}
+ for(const o of obstacles){o.x-=speed*dt;if(overlaps(rect(),{x:o.x+4,y:o.y+3,w:o.w-8,h:o.h-6})){finish();break;}}
+ obstacles=obstacles.filter(o=>o.x+o.w>0);updateHUD();}
+function round(x,y,w,h,r,color){ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();}
+function draw(){ctx.clearRect(0,0,1000,420);const sky=ctx.createLinearGradient(0,0,0,420);sky.addColorStop(0,'#172b3c');sky.addColorStop(1,'#39545b');ctx.fillStyle=sky;ctx.fillRect(0,0,1000,420);
+ ctx.fillStyle='#e4eed4';ctx.beginPath();ctx.arc(820,82,29,0,Math.PI*2);ctx.fill();
+ for(let i=0;i<12;i++){const x=((i*107-distance*.09)%1240+1240)%1240-120;const h=55+(i*31)%75;round(x,ground-h,85,h,3,'#263f4c');ctx.fillStyle='#47616a';ctx.fillRect(x+12,ground-h+16,6,5);ctx.fillRect(x+28,ground-h+16,6,5);}
+ ctx.fillStyle='#14282d';ctx.beginPath();ctx.moveTo(0,ground);for(let x=0;x<=1000;x+=20)ctx.lineTo(x,292+Math.sin((x+distance*.2)/95)*13);ctx.lineTo(1000,420);ctx.lineTo(0,420);ctx.fill();
+ ctx.fillStyle='#192d32';ctx.fillRect(0,ground,1000,82);ctx.fillStyle='#94baa3';ctx.fillRect(0,ground,1000,2);for(let i=0;i<30;i++){ctx.fillStyle='#48645f';ctx.fillRect(((i*47-distance)%1410+1410)%1410,365+(i%3)*13,16,2);}
+ for(const o of obstacles){if(o.drone){round(o.x,o.y+8,o.w,o.h-10,10,'#efbe84');round(o.x+14,o.y+15,36,10,5,'#704f47');ctx.fillStyle='#ffe3a5';ctx.fillRect(o.x+27,o.y+18,12,4);ctx.fillStyle='#e2c7a9';ctx.fillRect(o.x-6,o.y,28,3);ctx.fillRect(o.x+44,o.y,28,3);}else{round(o.x,o.y,o.w,o.h,5,'#e8a18b');ctx.strokeStyle='#994e4f';ctx.lineWidth=3;ctx.strokeRect(o.x+7,o.y+7,o.w-14,o.h-14);}}
+ const duck=pose==='smile',h=duck?28:60,w=duck?54:42,x=player.x,y=player.y-h;
+ ctx.fillStyle='#0c1d2466';ctx.beginPath();ctx.ellipse(x+22,ground+5,30,5,0,0,Math.PI*2);ctx.fill();
+ round(x,y,w,h-6,9,'#aeffd4');round(x+17,y+9,duck?30:28,16,5,'#1c4946');ctx.fillStyle='#d4fff4';ctx.fillRect(x+28,y+13,5,5);ctx.fillStyle='#efbd8c';ctx.fillRect(x-10,y+16,12,7);
+ const stride=state==='running'&&player.y===ground?Math.sin(elapsed*22)*5:0;round(x+5,y+h-8,11,8+stride,2,'#70be9c');round(x+27,y+h-8,11,8-stride,2,'#70be9c');
+ if(state==='running'&&obstacles.length){const o=obstacles[0];ctx.fillStyle='#e4eee7';ctx.font='16px system-ui';ctx.textAlign='center';ctx.fillText(o.drone?'↓ 수그리기':'↑ 점프',o.x+o.w/2,o.y-18);}
+}
+function frame(t){const dt=Math.min((t-last)/1000||0,0.05);last=t;if(aiActive&&performance.now()-aiLast>700){aiActive=false;aiCandidate='';if(state==='running')pause();$('status').textContent='입모양 신호 없음 · 일시정지';}let remain=dt;while(remain>0){const d=Math.min(remain,1/120);step(d);remain-=d;}draw();requestAnimationFrame(frame);}
+$('start').onclick=()=>state==='paused'?pause():input('closed');$('pause').onclick=pause;
+$('difficulty').onchange=e=>{base=Number(e.target.value);};
+const keys=new Map([['Enter','closed'],['Space','open'],['ArrowUp','open'],['ArrowDown','smile']]);
+addEventListener('keydown',e=>{if(e.target.tagName==='SELECT'||e.target.tagName==='BUTTON')return;if(keys.has(e.code)){e.preventDefault();if(!e.repeat)input(keys.get(e.code));}if(e.code==='KeyP'&&!e.repeat)pause();});
+addEventListener('keyup',e=>{if(keys.get(e.code)===pose&&state==='running'){e.preventDefault();input('closed');}});
+for(const id of ['closed','open','smile']){const b=$(id);b.addEventListener('pointerdown',e=>{e.preventDefault();b.setPointerCapture(e.pointerId);input(id);});for(const event of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(event,()=>{if(state==='running'&&pose===id)input('closed');});b.addEventListener('click',e=>{if(e.detail===0){input(id);if(id==='open')input('closed');}});}
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='running')pause();});addEventListener('blur',()=>{if(state==='running')pause();});
+// Call repeatedly with CNN classifications. No model or camera is bundled.
+window.MouthRunner={setPose(label,confidence=1){const now=performance.now();if(!['closed','open','smile'].includes(label)||!Number.isFinite(confidence)||confidence<0.8)return;aiLast=now;aiActive=true;if(aiCandidate!==label){aiCandidate=label;aiSince=now;return;}if(now-aiSince>=120&&(pose!==label||state==='ready'||state==='over'))input(label);},pause(){if(state==='running')pause();},getState(){return{state,pose,score:Math.floor(distance/10)};}};
+requestAnimationFrame(frame);
+</script>
+</html>
