@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>내 입모양 학습하기 — 입으로 달려라!</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23ff8a3d'/%3E%3Cellipse cx='16' cy='20' rx='5' ry='6' fill='%235b1a12'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <h1>내 입모양 학습하기</h1>
+      <p>웹캠으로 입 사진을 모으고, 같은 CNN을 이 브라우저에서 바로 학습합니다</p>
+    </div>
+    <nav>
+      <a href="index.html">게임</a>
+      <a href="collect.html" class="on">내 입모양 학습하기</a>
+    </nav>
+  </header>
+
+  <main class="layout collect-layout">
+    <aside class="card panel">
+      <h2>웹캠</h2>
+      <canvas id="preview" width="320" height="240" aria-label="웹캠 미리보기"></canvas>
+      <div class="ai-row">
+        <figure>
+          <canvas id="aiview" width="128" height="128" aria-label="저장될 사진"></canvas>
+          <figcaption>저장될 64×64</figcaption>
+        </figure>
+        <div class="ai-side">
+          <div id="bars"></div>
+          <p class="hint" id="barsHint"></p>
+        </div>
+      </div>
+      <label class="slider">박스 크기
+        <input id="boxSize" type="range" min="0.15" max="0.6" step="0.01">
+        <output id="boxSizeOut"></output>
+      </label>
+      <p class="status" id="camStatus">웹캠 연결 중…</p>
+      <button id="camBtn" type="button">웹캠 다시 연결</button>
+    </aside>
+
+    <div class="col">
+      <section class="card">
+        <h2 class="step-title"><span class="num">1</span>사진 모으기</h2>
+        <div class="field"><span>촬영 회차</span><input id="session" maxlength="24"></div>
+        <div class="field"><span>한 번에</span>
+          <select id="batch">
+            <option value="10">10장 (약 2초)</option>
+            <option value="20" selected>20장 (약 4초)</option>
+            <option value="40">40장 (약 8초)</option>
+          </select>
+        </div>
+
+        <div class="class-grid" id="classGrid"></div>
+
+        <div class="toolbar">
+          <button id="download" type="button">사진 JSON 내려받기</button>
+          <button id="loadJson" type="button">JSON 불러오기</button>
+          <input id="loadFile" type="file" accept=".json,application/json" multiple hidden>
+          <button id="clear" type="button">모두 지우기</button>
+          <span class="status" id="saveStatus"></span>
+        </div>
+
+        <ol class="guide">
+          <li>노란 박스 안에 입이 가득 차도록 박스 크기와 위치(미리보기 클릭)를 맞춥니다.</li>
+          <li>버튼(또는 키보드 1·2·3)을 누르면 3초 뒤 연속 촬영합니다. 촬영 중에 고개 각도·거리를 조금씩 바꾸세요.</li>
+          <li>분류마다 <b>최소 20장, 권장 60장 이상</b>. 게임할 때와 같은 자리·조명에서 찍으면 가장 잘 됩니다.</li>
+          <li>잘못 찍힌 사진은 아래 썸네일을 눌러 지웁니다.</li>
+          <li>사진은 이 브라우저 안에만 있고 업로드되지 않습니다. 내려받은 JSON은 얼굴 사진이므로 <b>깃허브에 올리지 마세요</b>.</li>
+        </ol>
+
+        <div class="thumbs" id="thumbs"></div>
+      </section>
+
+      <section class="card">
+        <h2 class="step-title"><span class="num">2</span>브라우저에서 바로 학습</h2>
+        <p class="hint">코랩 노트북과 같은 CNN 구조(합성곱 3층 + 완전연결 2층)를 무작위 가중치에서 시작해 이 컴퓨터에서 학습합니다. 사진의 20%는 검증용으로 떼어 둡니다.</p>
+        <div class="train-row">
+          <label>학습 횟수(epoch)
+            <select id="epochs">
+              <option value="10">10번 (빠름)</option>
+              <option value="20" selected>20번 (권장)</option>
+              <option value="30">30번</option>
+            </select>
+          </label>
+          <button class="primary" id="trainBtn" type="button">학습 시작</button>
+          <button id="stopBtn" type="button" disabled>중지</button>
+        </div>
+        <div class="progress"><span id="trainBar"></span></div>
+        <p class="status" id="trainStatus">사진을 모은 뒤 학습을 시작하세요.</p>
+        <canvas id="trainChart" width="760" height="170" aria-label="학습 곡선"></canvas>
+        <p class="hint" id="chartHover">그래프 위에 마우스를 올리면 epoch별 값이 보입니다.</p>
+
+        <div class="done-box" id="doneBox" hidden>
+          <p class="status" id="doneText"></p>
+          <div id="confusion"></div>
+          <div class="toolbar">
+            <button class="primary" id="useModel" type="button">이 모델로 게임하기</button>
+            <button id="downloadModel" type="button">mouth_model.js 내려받기</button>
+          </div>
+          <p class="hint">"이 모델로 게임하기"는 이 브라우저에만 모델을 저장합니다. 깃허브 사이트에 올려 다른 컴퓨터에서도 쓰려면 mouth_model.js를 내려받아 저장소의 model 폴더에 덮어쓰세요.</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>웹캠 영상과 사진은 이 브라우저 안에서만 처리되며 어디에도 전송되지 않습니다.</footer>
+
+  <script src="model/mouth_model.js"></script>
+  <script src="js/cnn.js"></script>
+  <script src="js/mouth-cam.js"></script>
+  <script src="js/train.js"></script>
+  <script src="js/collect.js"></script>
+</body>
+</html>

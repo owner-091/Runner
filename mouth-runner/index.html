@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>입으로 달려라! — 입모양 CNN 러닝 게임</title>
+  <meta name="description" content="입모양을 직접 학습한 CNN으로 인식해 조종하는 횡스크롤 러닝 게임">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23ff8a3d'/%3E%3Cellipse cx='16' cy='20' rx='5' ry='6' fill='%235b1a12'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <h1>입으로 달려라!</h1>
+      <p>직접 학습한 CNN이 입모양을 읽어 캐릭터를 조종합니다</p>
+    </div>
+    <nav>
+      <a href="index.html" class="on">게임</a>
+      <a href="collect.html">내 입모양 학습하기</a>
+    </nav>
+  </header>
+
+  <main class="layout">
+    <div class="col">
+      <section class="card stage">
+        <canvas id="game" aria-label="게임 화면"></canvas>
+        <ul class="legend">
+          <li><b class="dot run"></b>입 다물기 — 달리기 · 1초 유지하면 시작</li>
+          <li><b class="dot jump"></b>입 벌리기 — 점프</li>
+          <li><b class="dot duck"></b>이 보이게 웃기 — 수그리기</li>
+          <li class="keys">키보드: Space/↑ 점프 · ↓ 수그리기 · Enter 시작</li>
+        </ul>
+      </section>
+
+      <section class="card how">
+        <h2>작동 원리</h2>
+        <ol class="flow">
+          <li><b>웹캠</b><span>초당 최대 20번 영상을 읽음</span></li>
+          <li><b>입 영역 자르기</b><span>노란 박스를 64×64로 (학습 사진과 같은 방식)</span></li>
+          <li><b>CNN 예측</b><span id="archShort">모델을 넣으면 표시됩니다</span></li>
+          <li><b>흔들림 줄이기</b><span>확률 이동평균 + 2번 연속 같은 판단 + 판단 기준</span></li>
+          <li><b>게임 조작</b><span>다묾 = 달리기 · 벌림 = 점프 · 웃음 = 수그리기</span></li>
+        </ol>
+        <p class="arch" id="archDetail"></p>
+      </section>
+    </div>
+
+    <aside class="card panel">
+      <h2>입 인식</h2>
+      <canvas id="preview" width="320" height="240" aria-label="웹캠 미리보기"></canvas>
+      <div class="ai-row">
+        <figure>
+          <canvas id="aiview" width="128" height="128" aria-label="CNN 입력"></canvas>
+          <figcaption>AI가 보는 64×64</figcaption>
+        </figure>
+        <div class="ai-side">
+          <div id="bars"></div>
+          <div class="command">현재 명령 <strong id="cmd">–</strong></div>
+        </div>
+      </div>
+      <label class="slider">박스 크기
+        <input id="boxSize" type="range" min="0.15" max="0.6" step="0.01">
+        <output id="boxSizeOut"></output>
+      </label>
+      <label class="slider">판단 기준
+        <input id="threshold" type="range" min="0.34" max="0.95" step="0.01">
+        <output id="thresholdOut"></output>
+      </label>
+      <p class="hint">확률이 판단 기준보다 낮으면 아무 동작도 하지 않습니다. 잘 안 움직이면 기준을 낮추고, 멋대로 움직이면 높이세요.</p>
+      <p class="status" id="camStatus">웹캠 연결 중…</p>
+      <p class="status" id="modelStatus"></p>
+      <div class="model-actions" id="modelActions"></div>
+      <p class="status small">1회 예측 시간 <span id="infer">–</span></p>
+      <button id="camBtn" type="button">웹캠 다시 연결</button>
+    </aside>
+  </main>
+
+  <footer>웹캠 영상은 이 브라우저 안에서만 처리되며 어디에도 전송·저장되지 않습니다.</footer>
+
+  <script src="model/mouth_model.js"></script>
+  <script src="js/cnn.js"></script>
+  <script src="js/mouth-cam.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
