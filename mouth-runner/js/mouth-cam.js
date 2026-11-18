@@ -164,15 +164,25 @@
       const k = c.width / r.vw;
       const x = (r.vw - (r.sx + r.sw)) * k; // 거울 좌표로 변환
       const y = r.sy * k;
+      const bw = r.sw * k, bh = r.sh * k;
       g.lineWidth = 3;
       g.strokeStyle = '#facc15';
-      g.strokeRect(x, y, r.sw * k, r.sh * k);
+      g.strokeRect(x, y, bw, bh);
+      // 입꼬리 표시선: 박스 너비의 1/6, 5/6 위치 (입꼬리 사이 = 박스의 2/3, 코랩 전처리와 같음)
+      g.lineWidth = 2;
+      g.strokeStyle = 'rgba(250,204,21,0.9)';
+      for (const fx of [1 / 6, 5 / 6]) {
+        g.beginPath();
+        g.moveTo(x + bw * fx, y + bh * 0.32);
+        g.lineTo(x + bw * fx, y + bh * 0.68);
+        g.stroke();
+      }
       g.fillStyle = 'rgba(0,0,0,0.55)';
       g.fillRect(0, c.height - 22, c.width, 22);
       g.fillStyle = '#fff';
       g.font = '12px system-ui, sans-serif';
       g.textAlign = 'center';
-      g.fillText('입을 노란 박스 가운데에 — 화면을 클릭하면 박스 이동', c.width / 2, c.height - 7);
+      g.fillText('입꼬리를 박스 안 두 세로선에 맞추기 · 화면 클릭 = 박스 이동', c.width / 2, c.height - 7);
     }
   }
 
