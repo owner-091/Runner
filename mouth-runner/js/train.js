@@ -387,7 +387,10 @@
    * opts: { epochs, batchSize, lr, valFrac, seed, onProgress(info), shouldStop() }
    */
   async function trainModel(samples, opts) {
-    const o = Object.assign({ epochs: 20, batchSize: 16, lr: 0.001, valFrac: 0.2, seed: 42, inputShape: [64, 64, 3], nClasses: 3 }, opts);
+    // 배치 4, 학습률 0.001 = 코랩 노트북과 같은 설정.
+    // epochs를 정하지 않으면 사진 수와 상관없이 가중치를 약 targetSteps번 업데이트하도록 epoch 수를 정함
+    // (사진이 적을 때 epoch만 정하면 업데이트 횟수가 너무 적어 한 분류를 아예 못 배우는 문제가 있었음)
+    const o = Object.assign({ batchSize: 4, lr: 0.001, targetSteps: 600, valFrac: 0.2, seed: 42, inputShape: [64, 64, 3], nClasses: 3 }, opts);
     const rand = makeRandom(o.seed + 7);
     const net = new Net(o.arch || DEFAULT_ARCH, o.inputShape, o.seed);
     const { train, val } = stratifiedSplit(samples.slice(), o.nClasses, o.valFrac, rand);
@@ -396,6 +399,7 @@
     const buf = new Float32Array(H * W * C);
     const history = [];
     const stepsPerEpoch = Math.ceil(train.length / o.batchSize);
+    if (!o.epochs) o.epochs = Math.min(200, Math.max(15, Math.ceil(o.targetSteps / stepsPerEpoch)));
     let best = null;
     const t0 = performance.now();
     let lastYield = performance.now();
@@ -406,7 +410,8 @@
         net.layers.forEach((L, i) => L.params.forEach((p, j) => p.set(best.snapshot[i][j])));
       }
       const finalVal = val.length ? evaluate(net, val, o.nClasses) : null;
-      return { net, history, stopped, train, val, best, finalVal, seconds: (performance.now() - t0) / 1000 };
+      const finalTrain = evaluate(net, train, o.nClasses); // 증강 없이 학습 사진을 다시 분류
+      return { net, history, stopped, train, val, best, finalVal, finalTrain, epochs: o.epochs, steps: net.step, seconds: (performance.now() - t0) / 1000 };
     };
 
     for (let ep = 1; ep <= o.epochs; ep++) {

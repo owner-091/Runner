@@ -66,7 +66,7 @@
         <ol class="guide">
           <li>미리보기를 클릭해 박스를 입으로 옮기고, <b>입꼬리 양 끝이 박스 안 두 세로선</b>에 오도록 박스 크기를 맞춥니다 (코랩 전처리와 같은 크기).</li>
           <li>버튼(또는 키보드 1·2·3)을 누르면 3초 뒤 연속 촬영합니다. 촬영 중에 고개 각도·거리를 조금씩 바꾸세요.</li>
-          <li>분류마다 <b>최소 20장, 권장 60장 이상</b>. 게임할 때와 같은 자리·조명에서 찍으면 가장 잘 됩니다.</li>
+          <li>분류마다 <b>최소 20장, 권장 40~60장</b>. 게임할 때와 같은 자리·조명에서, 입모양을 <b>확실하게</b>(벌릴 땐 크게) 만들어 찍으세요.</li>
           <li>잘못 찍힌 사진은 아래 썸네일을 눌러 지웁니다.</li>
           <li>사진은 이 브라우저 안에만 있고 업로드되지 않습니다. 내려받은 JSON은 얼굴 사진이므로 <b>깃허브에 올리지 마세요</b>.</li>
         </ol>
@@ -76,13 +76,13 @@
 
       <section class="card">
         <h2 class="step-title"><span class="num">2</span>브라우저에서 바로 학습</h2>
-        <p class="hint">코랩 노트북과 같은 CNN 구조(합성곱 3층 + 완전연결 2층)를 무작위 가중치에서 시작해 이 컴퓨터에서 학습합니다. 사진의 20%는 검증용으로 떼어 둡니다.</p>
+        <p class="hint">코랩 노트북과 같은 CNN 구조(합성곱 3층 + 완전연결 2층)와 설정(배치 4, 학습률 0.001)으로 이 컴퓨터에서 학습합니다. 사진의 20%는 검증용으로 떼어 둡니다. 사진 수에 맞춰 epoch 수를 자동으로 정해, 가중치를 충분히(약 600번) 업데이트합니다.</p>
         <div class="train-row">
-          <label>학습 횟수(epoch)
-            <select id="epochs">
-              <option value="10">10번 (빠름)</option>
-              <option value="20" selected>20번 (권장)</option>
-              <option value="30">30번</option>
+          <label>학습량
+            <select id="amount">
+              <option value="300">빠르게 (업데이트 약 300번)</option>
+              <option value="600" selected>보통 · 권장 (약 600번)</option>
+              <option value="1200">오래 (약 1,200번)</option>
             </select>
           </label>
           <button class="primary" id="trainBtn" type="button">학습 시작</button>
@@ -96,6 +96,7 @@
         <div class="done-box" id="doneBox" hidden>
           <p class="status" id="doneText"></p>
           <div id="confusion"></div>
+          <p class="status" id="perClass"></p>
           <div class="toolbar">
             <button class="primary" id="useModel" type="button">이 모델로 게임하기</button>
             <button id="downloadModel" type="button">mouth_model.js 내려받기</button>

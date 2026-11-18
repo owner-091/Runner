@@ -132,17 +132,31 @@
       : '';
     const box = $('thumbs');
     box.innerHTML = '';
-    records.slice(-80).reverse().forEach((r) => {
+    const isWrong = (r) => r.pred && r.pred !== r.label;
+    const wrong = records.filter(isWrong);
+    const recent = records.slice(-80).reverse().filter((r) => !isWrong(r));
+    [...wrong, ...recent].forEach((r) => {
+      const fig = document.createElement('div');
+      fig.className = 'thumb' + (isWrong(r) ? ' wrong' : '');
       const img = document.createElement('img');
       img.src = 'data:image/png;base64,' + r.png;
-      img.title = `${r.name} — 눌러서 삭제`;
+      img.title = r.pred
+        ? `${r.name} — 정답 ${SHORT[r.label]}, 예측 ${SHORT[r.pred]}${r.isVal ? ' (검증용)' : ''} · 눌러서 삭제`
+        : `${r.name} — 눌러서 삭제`;
       img.style.setProperty('--c', K.ACTIONS[r.label].color);
       img.addEventListener('click', () => {
         if (busy) return;
         const i = records.indexOf(r);
         if (i >= 0) { records.splice(i, 1); dirty = true; render(); }
       });
-      box.appendChild(img);
+      fig.appendChild(img);
+      if (isWrong(r)) {
+        const b = document.createElement('span');
+        b.className = 'badge';
+        b.textContent = '→' + SHORT[r.pred];
+        fig.appendChild(b);
+      }
+      box.appendChild(fig);
     });
   }
 
@@ -367,18 +381,21 @@
     $('stopBtn').disabled = false;
     $('doneBox').hidden = true;
     control.paused = true; // 학습하는 동안 실시간 예측은 잠시 멈춤
-    totalEpochs = parseInt($('epochs').value, 10);
+    const targetSteps = parseInt($('amount').value, 10);
+    totalEpochs = 20; // 첫 진행 보고에서 실제 epoch 수로 바뀜
     history = [];
     hoverEpoch = null;
     drawChart();
-    const samples = records.map((r) => ({ x: r.x, y: CLASSES.indexOf(r.label) }));
+    records.forEach((r) => { delete r.pred; delete r.isVal; });
+    const samples = records.map((r) => ({ x: r.x, y: CLASSES.indexOf(r.label), ref: r }));
     let lastEpochSec = 0;
     try {
       const res = await window.MouthTrain.trainModel(samples, {
-        epochs: totalEpochs,
+        targetSteps,
         seed: Math.floor(Math.random() * 100000),
         shouldStop: () => stopReq,
         onProgress: (p) => {
+          totalEpochs = p.epochs;
           const frac = p.phase === 'batch' ? (p.epoch - 1 + p.step / p.steps) / p.epochs : p.epoch / p.epochs;
           $('trainBar').style.width = (frac * 100).toFixed(1) + '%';
           if (p.phase === 'epoch') {
@@ -397,13 +414,33 @@
       drawChart();
       const fv = res.finalVal;
       const pct = fv ? Math.round((fv.correct / fv.total) * 100) : null;
+      // 모든 사진을 학습된 모델로 다시 분류 → 틀린 사진은 썸네일에 빨간 표시
+      const valRefs = new Set(res.val.map((s) => s.ref));
+      for (const r of records) {
+        const p = res.net.predict(r.x);
+        r.pred = CLASSES[p.indexOf(Math.max(...p))];
+        r.isVal = valRefs.has(r);
+      }
+      const per = CLASSES.map((c) => {
+        const tr = records.filter((r) => r.label === c && !r.isVal), va = records.filter((r) => r.label === c && r.isVal);
+        const ok = (a) => a.filter((r) => r.pred === r.label).length;
+        return { c, trOk: ok(tr), trN: tr.length, vaOk: ok(va), vaN: va.length };
+      });
+      const weak = per.filter((q) => q.trN && q.trOk / q.trN < 0.9).map((q) => NAMES[q.c].title);
+      const nWrong = records.filter((r) => r.pred !== r.label).length;
+      $('perClass').innerHTML =
+        per.map((q) => `${NAMES[q.c].title}: 학습 ${q.trOk}/${q.trN} · 검증 ${q.vaOk}/${q.vaN}`).join('<br>') +
+        (nWrong ? `<br>틀린 사진 ${nWrong}장은 아래 썸네일 맨 앞에 빨간 테두리로 표시했습니다. 입모양이 애매한 사진이면 지우고 다시 학습하세요.` : '<br>모든 사진을 맞혔습니다.') +
+        (weak.length ? `<br><b>${weak.join(', ')}</b>을(를) 아직 잘 못 배웠어요. 학습량을 '오래'로 하거나 그 입모양 사진을 더 찍어 주세요.` : '');
+      render();
       const note = `브라우저 학습 · 사진 ${samples.length}장` + (fv ? ` · 검증 ${fv.correct}/${fv.total}` : '');
       trainedSpec = res.net.toSpec(CLASSES, note);
       const model = K.makeModel(trainedSpec);
       control.setModel(model);
       if (!bars) bars = K.buildBars($('bars'), control.classes);
       $('barsHint').textContent = '방금 학습한 모델의 실시간 예측입니다. 입모양을 바꿔 보며 확인하세요.';
-      $('trainStatus').textContent = res.stopped ? `중간에 멈췄습니다 (${res.history.length} epoch, ${Math.round(res.seconds)}초).` : `학습 완료 (${Math.round(res.seconds || lastEpochSec)}초).`;
+      $('trainStatus').textContent = (res.stopped ? `중간에 멈췄습니다 (${res.history.length} epoch` : `학습 완료 (${res.epochs} epoch`) +
+        `, 가중치 업데이트 ${res.steps}번, ${Math.round(res.seconds || lastEpochSec)}초).`;
       $('doneText').innerHTML = fv
         ? `검증 사진 <b>${fv.correct}/${fv.total}장</b> 정답 (${pct}%) · 검증 손실이 가장 낮았던 epoch ${res.best ? res.best.epoch : '-'}의 가중치를 씁니다.<br>` +
           '<span class="hint">같은 자리·같은 조명에서 찍은 사진이라 실제 게임보다 높게 나올 수 있어요. 오른쪽 위 확률 막대로 실제 반응을 확인하세요.</span>'
